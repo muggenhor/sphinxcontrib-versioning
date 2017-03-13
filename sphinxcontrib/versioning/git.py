@@ -237,7 +237,7 @@ def filter_and_date(local_root, conf_rel_paths, commits):
             dates_paths[commit] = [None, output.splitlines()[0].strip()]
 
     # Get timestamps by groups of 50.
-    command_prefix = ['git', 'show', '--no-patch', '--pretty=format:%ct']
+    command_prefix = ['git', 'show', '-s', '--pretty=format:%ct']
     for commits_group in chunk(dates_paths, 50):
         command = command_prefix + commits_group
         output = run_command(local_root, command)
