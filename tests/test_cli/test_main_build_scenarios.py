@@ -508,13 +508,13 @@ def test_passing_verbose(local_docs, urls, verbosity):
 
     # Check output.
     if verbosity == 0:
-        assert 'INFO     sphinxcontrib.versioning.__main__' not in output
+        assert 'INFO     sphinxcontrib.versioning.cli' not in output
         assert 'docnames to write:' not in output
     elif verbosity == 1:
-        assert 'INFO     sphinxcontrib.versioning.__main__' in output
+        assert 'INFO     sphinxcontrib.versioning.cli' in output
         assert 'docnames to write:' not in output
     else:
-        assert 'INFO     sphinxcontrib.versioning.__main__' in output
+        assert 'INFO     sphinxcontrib.versioning.cli' in output
         assert 'docnames to write:' in output
 
 

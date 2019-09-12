@@ -5,18 +5,18 @@ from os.path import join
 import pytest
 from click.testing import CliRunner
 
-from sphinxcontrib.versioning.__main__ import cli
+from sphinxcontrib.versioning.cli import cli
 from sphinxcontrib.versioning.git import IS_WINDOWS
 
 
 @pytest.fixture(autouse=True)
 def setup(monkeypatch, local_empty):
-    """Set __main__.NO_EXECUTE to True before every test in this module and sets CWD to an empty git repo.
+    """Set cli.NO_EXECUTE to True before every test in this module and sets CWD to an empty git repo.
 
     :param monkeypatch: pytest fixture.
     :param local_empty: conftest fixture.
     """
-    monkeypatch.setattr('sphinxcontrib.versioning.__main__.NO_EXECUTE', True)
+    monkeypatch.setattr('sphinxcontrib.versioning.cli.NO_EXECUTE', True)
     monkeypatch.chdir(local_empty)
 
 

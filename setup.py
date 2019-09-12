@@ -96,7 +96,7 @@ if __name__ == '__main__':
         ],
         cmdclass=dict(check_version=CheckVersion),
         description='Sphinx extension that allows building versioned docs for self-hosting.',
-        entry_points={'console_scripts': ['sphinx-versioning = sphinxcontrib.versioning.__main__:cli']},
+        entry_points={'console_scripts': ['sphinx-versioning = sphinxcontrib.versioning.cli:cli']},
         install_requires=INSTALL_REQUIRES,
         keywords='sphinx versioning versions version branches tags',
         license=LICENSE,

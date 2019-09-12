@@ -1,4 +1,4 @@
-"""Functions that perform main tasks. Code is here instead of in __main__.py."""
+"""Functions that perform main tasks. Code is here instead of in cli.py."""
 
 import json
 import logging
