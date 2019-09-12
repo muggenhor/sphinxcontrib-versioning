@@ -57,7 +57,12 @@ class EventHandlers(object):
 
         # Add versions.html to sidebar.
         if '**' not in app.config.html_sidebars:
-            app.config.html_sidebars['**'] = StandaloneHTMLBuilder.default_sidebars + ['versions.html']
+            # default_sidebars was deprecated in Sphinx 1.6+, so only use it if possible (to maintain
+            # backwards compatibility), else don't use it.
+            try:
+                app.config.html_sidebars['**'] = StandaloneHTMLBuilder.default_sidebars + ['versions.html']
+            except AttributeError:
+                app.config.html_sidebars['**'] = ['versions.html']
         elif 'versions.html' not in app.config.html_sidebars['**']:
             app.config.html_sidebars['**'].append('versions.html')
 
