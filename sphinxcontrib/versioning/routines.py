@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import subprocess
+import sys
 
 from sphinxcontrib.versioning.git import export, fetch_commits, filter_and_date, GitError, list_remote
 from sphinxcontrib.versioning.lib import Config, HandledError, TempDir
@@ -116,10 +117,62 @@ def pre_build(local_root, versions):
     exported_root = TempDir(True).name
 
     # Extract all.
+    if versions.remotes:
+        subprocess.check_call(('git', 'worktree', 'prune'))
     for sha in {r['sha'] for r in versions.remotes}:
         target = os.path.join(exported_root, sha)
         log.debug('Exporting %s to temporary directory.', sha)
-        export(local_root, sha, target)
+
+        # Replacement for export(local_root, sha, target) call
+        env = os.environ.copy()
+        env['GIT_DIR'] = os.path.join(local_root, '.git')
+        subprocess.check_call(('git', 'worktree', 'add', target, sha), env=env, cwd=local_root, stdin=subprocess.DEVNULL)
+
+        # Update timestamps, as export() does:
+        symlink_mode = 0o120000
+
+        encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+        workspace = target.encode(encoding)
+
+        files = subprocess.check_output(('git', 'ls-files', '-z'), cwd=target).split(b'\0')
+        whatchanged = subprocess.Popen(('git', 'whatchanged', '--pretty=format:%ct'), cwd=target, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE)
+        mtime = 0
+        for line in whatchanged.stdout:
+            if not files:
+                # Only keep reading until we've done all files
+                break
+
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith(b':'):
+                line = line[1:]
+
+                props, filenames = line.split(b'\t', 1)
+                old_mode, new_mode, old_hash, new_hash, operation = props.split(b' ')
+                old_mode, new_mode = int(old_mode, 8), int(new_mode, 8)
+
+                filenames = filenames.split(b'\t')
+                if len(filenames) == 1:
+                    filenames.insert(0, None)
+                old_filename, new_filename = filenames
+
+                if new_filename in files:
+                    files.remove(new_filename)
+                    path = os.path.join(workspace, new_filename)
+                    if new_mode == symlink_mode:
+                        # Only attempt to modify symlinks' timestamps when the current system supports it.
+                        # E.g. Python >= 3.3 and Linux kernel >= 2.6.22
+                        if os.utime in getattr(os, 'supports_follow_symlinks', set()):
+                            os.utime(path, (mtime, mtime), follow_symlinks=False)
+                    else:
+                        os.utime(path, (mtime, mtime))
+            else:
+                mtime = int(line)
+        try:
+            whatchanged.terminate()
+        except OSError:
+            pass
 
     # Build root.
     remote = versions[Config.from_context().root_ref]
