@@ -36,7 +36,7 @@ def read_local_conf(local_conf):
     return {k[4:]: v for k, v in config.items() if k.startswith('scv_') and not k[4:].startswith('_')}
 
 
-def gather_git_info(root, conf_rel_paths, whitelist_branches, whitelist_tags):
+def gather_git_info(root, conf_rel_paths, whitelist_branches, whitelist_tags, override_refs):
     """Gather info about the remote git repository. Get list of refs.
 
     :raise HandledError: If function fails with a handled error. Will be logged before raising.
@@ -59,6 +59,18 @@ def gather_git_info(root, conf_rel_paths, whitelist_branches, whitelist_tags):
         log.error(exc.message)
         log.error(exc.output)
         raise HandledError
+
+    # Apply overrides
+    override_refs = list(override_refs)
+    for ri, (_, r_name, _) in enumerate(remotes):
+        for oi, override in enumerate(override_refs):
+            o_name = override[1]
+            if r_name == o_name:
+                remotes[ri] = override
+                del override_refs[oi]
+                break
+    remotes.extend(override_refs)
+
     log.info('Found: %s', ' '.join(i[1] for i in remotes))
 
     # Filter and date.

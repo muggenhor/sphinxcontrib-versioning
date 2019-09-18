@@ -203,6 +203,8 @@ def build_options(func):
                         help='Whitelist branches that match the pattern. Can be specified more than once.')(func)
     func = click.option('-W', '--whitelist-tags', multiple=True,
                         help='Whitelist tags that match the pattern. Can be specified more than once.')(func)
+    func = click.option('--override-branch', multiple=True,
+                        help='''Override branch ref by given commit. Can be used to build a commit that hasn't yet been pushed to a remote branch.''')(func)
 
     return func
 
@@ -268,10 +270,15 @@ def build(config, rel_source, destination, **options):
         raise RuntimeError(config, rel_source, destination)
     log = logging.getLogger(__name__)
 
+    override_refs = []
+    for override in config.override_branch:
+        branch, commit = override.rsplit('=', 1)
+        override_refs.append((commit, branch, 'heads'))
+
     # Gather git data.
     log.info('Gathering info about the remote git repository...')
     conf_rel_paths = [os.path.join(s, 'conf.py') for s in rel_source]
-    remotes = gather_git_info(config.git_root, conf_rel_paths, config.whitelist_branches, config.whitelist_tags)
+    remotes = gather_git_info(config.git_root, conf_rel_paths, config.whitelist_branches, config.whitelist_tags, override_refs)
     if not remotes:
         log.error('No docs found in any remote branch/tag. Nothing to do.')
         raise HandledError
